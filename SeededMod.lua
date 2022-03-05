@@ -6,18 +6,22 @@ ModUtil.RegisterMod("SeededMod")
 ]]
 local config = {
   ModName = "Seeded Mod",
+  DeterministicPriceOfMidas = true,
   DeterministicSpawnPositions = true,
-  --DeterministicMoneyDrops = true,
-  --DeterministicPriceOfMidas = true,
-  --DeterministicSellWell = true,
-  --DeterministicEnemyAI = true,
-  --DisablePotRngIncrements = true,
+  DeterministicMoneyDrops = true, -- this might still depend on enemy kill order
   DisableGhostRngIncrements = true
 }
 
 if ModConfigMenu then
   ModConfigMenu.Register(config)
 end
+
+-- Ensure that the rng calls for Price of Midas will always happen in the same order.
+ModUtil.LoadOnce( function()
+    if config.DeterministicPriceOfMidas then
+      table.sort(ConsumableData.DamageSelfDrop, cmp_multitype)
+    end
+end)
 
 --[[ Ensure that spawn initial spawn positions are always the same on the same seed,
      by sorting the spawn point tables when they come back from the engine.
@@ -94,7 +98,8 @@ local RngFunctions = {
   GetRandomValue = OneArgRngFunction,
   RandomChance = OneArgRngFunction,
   RandomFloat = TwoArgRngFunction,
-  RemoveRandomValue = OneArgRngFunction
+  RemoveRandomValue = OneArgRngFunction,
+  RandomInt = TwoArgRngFunction
 }
 
 function OverrideFunctionRng(funcName, rngId, condition)
@@ -102,6 +107,10 @@ function OverrideFunctionRng(funcName, rngId, condition)
     ModUtil.WrapBaseWithinFunction( funcName, rngFunctionName, rngFunction(rngId, condition) )
   end
 end
+
+-- Put rolls from money drops on a separate RNG so it doesn't affect routing.
+-- This also prevents the main increments from killing pots.
+OverrideFunctionRng("CheckMoneyDrop", AdditionalRngs.Money, "DeterministicMoneyDrops")
 
 -- Put ghost pathing on a separate RNG so it doesn't affect routing.
 OverrideFunctionRng("PatrolPath", AdditionalRngs.Ghost, "DisableGhostRngIncrements")
