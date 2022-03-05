@@ -1,6 +1,8 @@
 Mod for the Modded Seeded category, to improve quality of life in routed
 hades and reduce randomness without impacting the core gameplay.
 
+Not leaderboard legal (for now).
+
 Core features:
  - Ghosts use separate RNG from the main game, so that they don't affect routing.
  - Money drops use separate RNG from the main game. This means breaking pots won't affect routing, and how much money you get should be more consistent.
